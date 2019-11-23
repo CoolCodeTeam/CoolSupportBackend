@@ -85,7 +85,9 @@ func main() {
 	defer db.Close()
 
 	corsMiddleware := handlers.CORS(
-		handlers.AllowedOrigins([]string{"http://boiling-chamber-90136.herokuapp.com", "https://boiling-chamber-90136.herokuapp.com", "http://localhost:3000"}),
+		handlers.AllowedOrigins([]string{"http://boiling-chamber-90136.herokuapp.com",
+			"https://boiling-chamber-90136.herokuapp.com", "http://localhost:3000", "http://localhost:3001",
+			"95.163.209.195:8082"}),
 		handlers.AllowedMethods([]string{"POST", "GET", "PUT", "DELETE"}),
 		handlers.AllowedHeaders([]string{"Content-Type"}),
 		handlers.AllowCredentials(),
