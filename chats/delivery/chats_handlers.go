@@ -2,42 +2,37 @@ package delivery
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
+	"github.com/CoolCodeTeam/CoolSupportBackend/chats/models"
+	"github.com/CoolCodeTeam/CoolSupportBackend/chats/usecase"
+	users "github.com/CoolCodeTeam/CoolSupportBackend/supports/usecase"
+	"github.com/CoolCodeTeam/CoolSupportBackend/utils"
+	utils_models "github.com/CoolCodeTeam/CoolSupportBackend/utils/models"
 	"net/http"
-	"strconv"
 )
 
 type ChatHandlers struct {
-	Chats    useCase.ChatsUseCase
+	Users users.SupportsUseCase
+	Chats    usecase.ChatsUseCase
+	utils utils.HandlersUtils
 }
 
 func (c *ChatHandlers) GetChatsByUser(w http.ResponseWriter, r *http.Request) {
 
 	cookie, _ := r.Cookie("session_id")
-	cookieID, err := c.Users.GetID(cookie.Value)
+	cookieID, err := c.Users.GetUserBySession(cookie.Value)
 	if err != nil {
 		c.utils.HandleError(
-			models.NewClientError(err, http.StatusUnauthorized, "Bad request : not valid cookie:("),
+			utils_models.NewClientError(err, http.StatusUnauthorized, "Bad request : not valid cookie:("),
 			w, r)
 		return
 	}
-	if cookieID != uint64(requestedID) {
-		c.utils.HandleError(
-			models.NewClientError(err, http.StatusUnauthorized, fmt.Sprintf("Actual id: %d, Requested id: %d", cookieID, requestedID)),
-			w, r)
-		return
-	}
-	chats, err := c.Chats.GetChatsByUserID(uint64(requestedID))
+
+	chats, err := c.Chats.GetChatsByUserID(uint64(cookieID))
 	if err != nil {
 		c.utils.HandleError(err, w, r)
 		return
 	}
-	workspaces, err := c.Chats.GetWorkspacesByUserID(uint64(requestedID))
-	if err != nil {
-		c.utils.HandleError(err, w, r)
-		return
-	}
-	responseChats := models.ResponseChatsArray{Chats: chats, Workspaces: workspaces}
+	responseChats := models.ResponseChatsArray{Chats: chats}
 	jsonChat, err := json.Marshal(responseChats)
 	_, err = w.Write(jsonChat)
 }
