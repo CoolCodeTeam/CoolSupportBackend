@@ -1,5 +1,4 @@
-DROP DATABASE IF EXISTS supportdatabase;
-CREATE DATABASE supportdatabase;
+-- CREATE DATABASE supportdb WITH OWNER supportdbuser;
 
 
 DROP TABLE IF EXISTS supports CASCADE;
