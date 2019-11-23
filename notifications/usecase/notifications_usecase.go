@@ -4,7 +4,7 @@ import (
 	"github.com/CoolCodeTeam/CoolSupportBackend/notifications/models"
 	"github.com/CoolCodeTeam/CoolSupportBackend/notifications/repository"
 	chats "github.com/CoolCodeTeam/CoolSupportBackend/chats/usecase"
-	users "github.com/CoolCodeTeam/CoolSupportBackend/users/usecase"
+	users "github.com/CoolCodeTeam/CoolSupportBackend/supports/usecase"
 )
 
 type NotificationsUseCase interface {
@@ -16,7 +16,7 @@ type NotificationsUseCase interface {
 
 type NotificationUseCaseImpl struct {
 	notificationRepository repository.NotificationRepository
-	users users.UsersUseCase
+	users users.SupportsUseCase
 	chats chats.ChatsUseCase
 }
 

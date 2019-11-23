@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"github.com/CoolCodeTeam/CoolSupportBackend/notifications/usecase"
+	users"github.com/CoolCodeTeam/CoolSupportBackend/supports/usecase"
 	"github.com/CoolCodeTeam/CoolSupportBackend/utils"
 	utils_models "github.com/CoolCodeTeam/CoolSupportBackend/utils/models"
 	"github.com/gorilla/mux"
@@ -12,8 +13,7 @@ import (
 
 type NotificationHandlers struct {
 	notificationUseCase usecase.NotificationsUseCase
-	chatsUseCase        useCase.ChatsUseCase
-	Users               useCase.UsersUseCase
+	Users               users.SupportsUseCase
 	utils               utils.HandlersUtils
 }
 
@@ -65,7 +65,7 @@ func (h *NotificationHandlers) HandleNewClientWSConnection(w http.ResponseWriter
 		return
 	}
 
-	userID, err := h.parseCookie(sessionID)
+	userID, err := h.parseCookie(r)
 	//Достаем Handler с помощью Messages
 	hub, err := h.notificationUseCase.OpenClientConn(userID)
 	go hub.Run()
@@ -87,8 +87,9 @@ func (h *NotificationHandlers) HandleNewClientWSConnection(w http.ResponseWriter
 
 }
 
-func (h NotificationHandlers) parseCookie(cookie *http.Cookie) (uint64, error) {
-	ID, err := h.Users.GetID
+func (h NotificationHandlers) parseCookie(r *http.Request) (uint64, error) {
+	cookie, _ := r.Cookie("session_id")
+	ID, err := h.Users.GetUserBySession(cookie.Value)
 	if err == nil {
 		return ID, nil
 	} else {
