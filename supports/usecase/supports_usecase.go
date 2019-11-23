@@ -13,6 +13,7 @@ type SupportsUseCase interface {
 	GetSupportByID(id uint64) (models.Support, error)
 	Login(support models.Support) (models.Support, error)
 	GetUserBySession(session string) (uint64,error)
+	GetRandomID() (uint64, error)
 }
 
 type supportUseCase struct {

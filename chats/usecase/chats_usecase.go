@@ -8,7 +8,7 @@ import (
 type ChatsUseCase interface {
 	GetChatsByUserID(ID uint64) ([]models.Chat, error)
 	RemoveChat(ID uint64) error
-	CreateChat(userID uint64,suppID uint64) (uint64,error)
+	CreateChat(suppID uint64) (uint64,error)
 }
 
 type ChatsUseCaseImpl struct {
@@ -20,8 +20,8 @@ func (c *ChatsUseCaseImpl) RemoveChat(ID uint64) error {
 	return err
 }
 
-func (c *ChatsUseCaseImpl) CreateChat(userID uint64, suppID uint64) (uint64,error){
-	id,err:=c.repository.CreateChat(userID,suppID)
+func (c *ChatsUseCaseImpl) CreateChat(suppID uint64) (uint64,error){
+	id,err:=c.repository.CreateChat(suppID)
 	return id,err
 }
 

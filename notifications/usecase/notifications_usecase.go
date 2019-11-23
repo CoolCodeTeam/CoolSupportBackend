@@ -9,7 +9,7 @@ import (
 
 type NotificationsUseCase interface {
 	OpenServerConn(chatID uint64) (*models.WebSocketHub, error)
-	OpenClientConn(userID uint64) (*models.WebSocketHub, error)
+	OpenClientConn() (*models.WebSocketHub, error)
 	SendMessage(chatID uint64, message []byte) error
 	HandleCloseConn(chatID uint64) error
 }
@@ -24,18 +24,18 @@ func (n *NotificationUseCaseImpl) OpenServerConn(chatID uint64) (*models.WebSock
 	return n.notificationRepository.GetNotificationHub(chatID), nil
 }
 
-func (n *NotificationUseCaseImpl) OpenClientConn(userID uint64) (*models.WebSocketHub, error) {
+func (n *NotificationUseCaseImpl) OpenClientConn() (*models.WebSocketHub, error) {
 	//get random user_id
 	randomID,err:=n.users.GetRandomID()
 
 
 	//create_chat
-	id,err:=n.chats.CreateChat(userID,randomID)
+	id,err:=n.chats.CreateChat(randomID)
 	if err!=nil{
 		return &models.WebSocketHub{},err
 	}
 	//openConn
-	n.OpenServerConn(id)
+	return n.OpenServerConn(id)
 }
 
 func (n *NotificationUseCaseImpl) SendMessage(chatID uint64, message []byte) error {
