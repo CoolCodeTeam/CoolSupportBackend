@@ -68,21 +68,11 @@ func (u *supportUseCase) Valid(support models.Support) bool {
 }
 
 func comparePasswords(hashedPassword string, plainPassword string) bool {
-	hashedPassword = plainPassword
-	return true
+	return hashedPassword == plainPassword
+
 }
 
 func (u *supportUseCase) GetUserBySession(session string) (uint64, error) {
 	id, err := u.sessions.GetID(session)
 	return id, err
-
-}
-
-//TODO: use on support creation
-func hashAndSalt(pwd string) string {
-	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.MinCost)
-	if err != nil {
-		log.Println(err)
-	}
-	return string(hash)
 }
