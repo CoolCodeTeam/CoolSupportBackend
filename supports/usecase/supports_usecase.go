@@ -5,7 +5,6 @@ import (
 	"github.com/CoolCodeTeam/CoolSupportBackend/supports/repository"
 	utilsModels "github.com/CoolCodeTeam/CoolSupportBackend/utils/models"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"net/http"
 )
 
@@ -68,8 +67,12 @@ func (u *supportUseCase) Valid(support models.Support) bool {
 }
 
 func comparePasswords(hashedPassword string, plainPassword string) bool {
-	return hashedPassword == plainPassword
-
+	byteHash := []byte(hashedPassword)
+	err := bcrypt.CompareHashAndPassword(byteHash, []byte(plainPassword))
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func (u *supportUseCase) GetUserBySession(session string) (uint64, error) {
