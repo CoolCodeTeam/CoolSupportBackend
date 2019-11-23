@@ -12,13 +12,13 @@ import (
 type SupportsUseCase interface {
 	GetSupportByID(id uint64) (models.Support, error)
 	Login(support models.Support) (models.Support, error)
-	GetUserBySession(session string) (uint64,error)
+	GetUserBySession(session string) (uint64, error)
 	GetRandomID() (uint64, error)
 }
 
 type supportUseCase struct {
 	repository repository.SupportRepo
-	sessions repository.SessionRepository
+	sessions   repository.SessionRepository
 }
 
 func (u *supportUseCase) Login(loginSupport models.Support) (models.Support, error) {
@@ -68,8 +68,12 @@ func (u *supportUseCase) Valid(support models.Support) bool {
 }
 
 func comparePasswords(hashedPassword string, plainPassword string) bool {
-	return hashedPassword==plainPassword
-
+	byteHash := []byte(hashedPassword)
+	err := bcrypt.CompareHashAndPassword(byteHash, []byte(plainPassword))
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func (u *supportUseCase) GetUserBySession(session string) (uint64, error) {

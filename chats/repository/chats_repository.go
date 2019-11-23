@@ -26,7 +26,7 @@ func (c *ChatsDBRepository) CreateChat(userID uint64) (uint64, error) {
 	}
 	defer tx.Rollback()
 
-	_ = c.db.QueryRow("INSERT INTO chats (supportid) VALUES ($1,$2) RETURNING id",
+	_ = c.db.QueryRow("INSERT INTO chats (supportid) VALUES ($1) RETURNING id",
 		 userID).Scan(&chatID)
 	return chatID, nil
 
