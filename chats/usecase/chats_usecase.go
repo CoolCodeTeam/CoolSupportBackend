@@ -41,11 +41,10 @@ func (c *ChatsUseCaseImpl) CreateChat(suppID uint64) (uint64,error){
 
 func (c *ChatsUseCaseImpl) GetChatsByUserID(ID uint64) ([]models.Chat, error) {
 	chats, err := c.repository.GetChats(ID)
-	var userChats []models.Chat
 	if err != nil {
 		return chats, err
 	}
-	return userChats, nil
+	return chats, nil
 }
 
 func NewChatsUseCase(repo repository.ChatsRepository) ChatsUseCase {

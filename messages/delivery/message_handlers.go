@@ -6,7 +6,7 @@ import (
 	useCase "github.com/CoolCodeTeam/CoolSupportBackend/messages/usecase"
 	notifications "github.com/CoolCodeTeam/CoolSupportBackend/notifications/usecase"
 	users "github.com/CoolCodeTeam/CoolSupportBackend/supports/usecase"
-	utils "github.com/CoolCodeTeam/CoolSupportBackend/utils"
+	"github.com/CoolCodeTeam/CoolSupportBackend/utils"
 	utils_models "github.com/CoolCodeTeam/CoolSupportBackend/utils/models"
 	"github.com/gorilla/mux"
 	"net/http"

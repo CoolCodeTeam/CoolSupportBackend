@@ -68,12 +68,8 @@ func (u *supportUseCase) Valid(support models.Support) bool {
 }
 
 func comparePasswords(hashedPassword string, plainPassword string) bool {
-	byteHash := []byte(hashedPassword)
-	err := bcrypt.CompareHashAndPassword(byteHash, []byte(plainPassword))
-	if err != nil {
-		return false
-	}
-	return true
+	return hashedPassword==plainPassword
+
 }
 
 func (u *supportUseCase) GetUserBySession(session string) (uint64, error) {

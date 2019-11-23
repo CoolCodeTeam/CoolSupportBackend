@@ -26,7 +26,7 @@ func (c *ChatsDBRepository) CreateChat(userID uint64) (uint64, error) {
 	}
 	defer tx.Rollback()
 
-	_ = c.db.QueryRow("INSERT INTO chats (supportID) VALUES ($1,$2) RETURNING id",
+	_ = c.db.QueryRow("INSERT INTO chats (supportid) VALUES ($1,$2) RETURNING id",
 		 userID).Scan(&chatID)
 	return chatID, nil
 
@@ -49,7 +49,7 @@ func (c ChatsDBRepository) GetChatByID(ID uint64) (models.Chat, error) {
 	}
 	defer tx.Rollback()
 
-	row := tx.QueryRow("SELECT id, supportID FROM chats WHERE id=$1 ", ID)
+	row := tx.QueryRow("SELECT id, supportid FROM chats WHERE id=$1 ", ID)
 	err = row.Scan(&result.ID, &result.SupportID)
 	if err != nil {
 		return result, utils_models.NewClientError(err, http.StatusBadRequest, "chat not exists: "+err.Error())
@@ -61,13 +61,14 @@ func (c ChatsDBRepository) GetChatByID(ID uint64) (models.Chat, error) {
 func (c ChatsDBRepository) GetChats(userID uint64) ([]models.Chat, error) {
 	result :=make([]models.Chat,0)
 
-	rows, err := c.db.Query("SELECT id, supportID FROM chats WHERE support_id=$1", userID)
+	rows, err := c.db.Query("SELECT id, supportid FROM chats WHERE supportid=$1", userID)
 	for rows.Next(){
 		var chat models.Chat
 		err = rows.Scan(&chat.ID, &chat.SupportID)
 		if err != nil {
 			return result, utils_models.NewServerError(err, http.StatusBadRequest, "can not GetChats: "+err.Error())
 		}
+		result = append(result, chat)
 	}
 
 	return result,nil
