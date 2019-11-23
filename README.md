@@ -1,6 +1,6 @@
 #1 Supports
  * Login
- * /users
+ * /supports
  * /logout
 #2 Chats
  * /users/{id}/chats
