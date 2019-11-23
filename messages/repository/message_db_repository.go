@@ -19,7 +19,7 @@ func (m *MessageDBRepository) PutMessage(message *models.Message) (uint64, error
 	if err != nil {
 		return 0, utils_models.NewClientError(err, http.StatusBadRequest, "Wrong date format")
 	}
-	row := m.DB.QueryRow("INSERT into messages (body, chatid,messagetime,isSupport) VALUES ($1,$2,$3,$4,$5,$6) returning id",
+	row := m.DB.QueryRow("INSERT into messages (body, chatid,messagetime,isSupport) VALUES ($1,$2,$3,$4) returning id",
 		message.Text, message.ChatID, time,message.IsSupp)
 	err = row.Scan(&chatID)
 
@@ -32,7 +32,7 @@ func (m *MessageDBRepository) PutMessage(message *models.Message) (uint64, error
 
 func (m *MessageDBRepository) GetMessagesByChatID(chatID uint64) (models.Messages, error) {
 	returningMessages := make([]*models.Message, 0)
-	rows, err := m.DB.Query("SELECT id,body, chatid,messagetime,isSupport FROM messages where chatid=$1 order by id asc ", chatID)
+	rows, err := m.DB.Query("SELECT id,body, chatid,messagetime,issupport FROM messages where chatid=$1 order by id asc ", chatID)
 	if err != nil {
 		return models.Messages{}, utils_models.NewServerError(err, http.StatusInternalServerError,
 			"Can not get messages in GetMessagesByChatId "+err.Error())

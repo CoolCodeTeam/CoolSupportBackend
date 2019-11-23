@@ -8,7 +8,7 @@ type Message struct {
 	Text        string `json:"text"`
 	MessageTime string `json:"message_time"`
 	ChatID      uint64 `json:"chat_id"`
-	IsSupp      byte   `json:"is_support"`
+	IsSupp      bool   `json:"is_support"`
 }
 
 type Messages struct {

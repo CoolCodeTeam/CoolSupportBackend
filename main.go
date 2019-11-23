@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/CoolCodeTeam/CoolSupportBackend/middleware"
 	supportDelivery "github.com/CoolCodeTeam/CoolSupportBackend/supports/delivery"
 	supportRepository "github.com/CoolCodeTeam/CoolSupportBackend/supports/repository"
 	supportUseCase "github.com/CoolCodeTeam/CoolSupportBackend/supports/usecase"
@@ -96,29 +97,31 @@ func main() {
 	supportsUseCase := supportUseCase.NewSupportUseCase(supportsRepository, sessionRepository)
 	supportsApi := supportDelivery.NewSupportHandlers(supportsUseCase, sessionRepository, utils)
 
-	chatsUseCase := chatUseCase.NewChatsUseCase(chatRepository.NewChatsDBRepository(db))
+	chatsUseCase := chatUseCase.NewChatsUseCase(chatRepository.NewChatsDBRepository(db), supportsUseCase)
 	messagesUseCase := messageUseCase.NewMessageUseCase(messageRepository.NewMessageDbRepository(db), chatsUseCase)
 	notificationsUseCase := notificationUseCase.NewNotificationUseCase()
 	chatsApi := chatDelivery.NewChatHandlers(supportsUseCase, chatsUseCase, utils)
 	notificationApi := notificationDelivery.NewNotificationHandlers(notificationsUseCase, supportsUseCase, utils)
 	messagesApi := messageDelivery.NewMessageHandlers(messagesUseCase, supportsUseCase, notificationsUseCase, utils)
+	middlewares := middleware.HandlersMiddlwares{
+		Logger: logrusLogger,
+	}
 
 	r := mux.NewRouter()
-	handler := r
-	r.HandleFunc("/login", supportsApi.Login).Methods("POST")
+	handler := middlewares.LogMiddleware(middlewares.PanicMiddleware(r))
+	r.HandleFunc("/login", supportsApi.Login).Methods("POST") //OK
 	r.HandleFunc("/logout", supportsApi.Logout).Methods("DELETE")
-	r.HandleFunc("/users", supportsApi.GetSupportBySession).Methods("GET")
+	r.HandleFunc("/users", supportsApi.GetSupportBySession).Methods("GET") //OK
 
-	r.HandleFunc("/users/{id:[0-9]+}/chats", chatsApi.GetChatsByUser).Methods("GET")
+	r.HandleFunc("/users/{id:[0-9]+}/chats", chatsApi.GetChatsByUser).Methods("GET") //OK
 
-	r.HandleFunc("/channels/{id:[0-9]+}/messages", messagesApi.SendMessage).Methods("POST")
-	r.HandleFunc("/channels/{id:[0-9]+}/messages", messagesApi.GetMessagesByChatID).Methods("GET")
+	r.HandleFunc("/chats/{id:[0-9]+}/messages", messagesApi.GetMessagesByChatID).Methods("GET") //OK
+	r.HandleFunc("/chats", chatsApi.GetChat).Methods("GET")                                     //OK
 
 	r.HandleFunc("/chats/{id:[0-9]+}/notifications", notificationApi.HandleNewSupportWSConnection)
 
 	r.HandleFunc("/chats/{id:[0-9]+}/messages", messagesApi.SendMessage).Methods("POST").
 		HeadersRegexp("Content-Type", "application/(text|json)")
-	r.HandleFunc("/chats/{id:[0-9]+}/messages", messagesApi.GetMessagesByChatID).Methods("GET")
 	log.Println("Server started")
 
 	err = http.ListenAndServe(":8081", corsMiddleware(handler))

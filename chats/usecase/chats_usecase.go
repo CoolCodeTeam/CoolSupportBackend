@@ -47,8 +47,9 @@ func (c *ChatsUseCaseImpl) GetChatsByUserID(ID uint64) ([]models.Chat, error) {
 	return chats, nil
 }
 
-func NewChatsUseCase(repo repository.ChatsRepository) ChatsUseCase {
+func NewChatsUseCase(repo repository.ChatsRepository,user users.SupportsUseCase) ChatsUseCase {
 	return &ChatsUseCaseImpl{
 		repository:      repo,
+		users:user,
 	}
 }
