@@ -4,23 +4,26 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/CoolCodeTeam/CoolSupportBackend/chats/repository"
 	supportDelivery "github.com/CoolCodeTeam/CoolSupportBackend/supports/delivery"
 	supportRepository "github.com/CoolCodeTeam/CoolSupportBackend/supports/repository"
 	supportUseCase "github.com/CoolCodeTeam/CoolSupportBackend/supports/usecase"
+	"github.com/gorilla/handlers"
 
 	chatDelivery "github.com/CoolCodeTeam/CoolSupportBackend/chats/delivery"
 	chatRepository "github.com/CoolCodeTeam/CoolSupportBackend/chats/repository"
 	chatUseCase "github.com/CoolCodeTeam/CoolSupportBackend/chats/usecase"
 
-	messagesDelivery "github.com/CoolCodeTeam/CoolSupportBackend/messages/delivery"
-	messagesRepository "github.com/CoolCodeTeam/CoolSupportBackend/messages/repository"
-	messagesUseCase "github.com/CoolCodeTeam/CoolSupportBackend/messages/usecase"
+	messageDelivery "github.com/CoolCodeTeam/CoolSupportBackend/messages/delivery"
+	messageRepository "github.com/CoolCodeTeam/CoolSupportBackend/messages/repository"
+	messageUseCase "github.com/CoolCodeTeam/CoolSupportBackend/messages/usecase"
+
+	notificationDelivery "github.com/CoolCodeTeam/CoolSupportBackend/notifications/delivery"
+	notificationUseCase "github.com/CoolCodeTeam/CoolSupportBackend/notifications/usecase"
 
 	utils2 "github.com/CoolCodeTeam/CoolSupportBackend/utils"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
-	"github.com/kabukky/httpscerts"
+	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"io"
 	"log"
@@ -79,85 +82,48 @@ func main() {
 	defer redisConn.Close()
 
 	defer db.Close()
+
+	corsMiddleware := handlers.CORS(
+		handlers.AllowedOrigins([]string{"http://boiling-chamber-90136.herokuapp.com", "https://boiling-chamber-90136.herokuapp.com", "http://localhost:3000"}),
+		handlers.AllowedMethods([]string{"POST", "GET", "PUT", "DELETE"}),
+		handlers.AllowedHeaders([]string{"Content-Type"}),
+		handlers.AllowCredentials(),
+	)
+
 	sessionRepository := supportRepository.NewSessionRedisStore(redisConn)
 
 	supportsRepository := supportRepository.NewSupportDBStore(db)
 	supportsUseCase := supportUseCase.NewSupportUseCase(supportsRepository, sessionRepository)
-	usersApi := supportDelivery.NewSupportHandlers(supportsUseCase, sessionRepository, utils)
+	supportsApi := supportDelivery.NewSupportHandlers(supportsUseCase, sessionRepository, utils)
 
-	chatsUseCase := useCase.NewChatsUseCase(repository.NewChatsDBRepository(db), supportsRepository)
-	messagesUseCase := useCase.NewMessageUseCase(repository.NewMessageDbRepository(db), chatsUseCase)
-	notificationsUseCase := useCase.NewNotificationUseCase()
-	chatsApi := delivery.NewChatHandlers(supportsUseCase, sessionRepository, chatsUseCase, utils)
-	notificationApi := delivery.NewNotificationHandlers(supportsUseCase, sessionRepository, chatsApi.Chats, notificationsUseCase, utils)
-	messagesApi := delivery.NewMessageHandlers(messagesUseCase, supportsUseCase, sessionRepository, notificationsUseCase, utils)
-	middlewares := middleware.HandlersMiddlwares{
-		Sessions: sessionRepository,
-		Logger:   logrusLogger,
-	}
+	chatsUseCase := chatUseCase.NewChatsUseCase(chatRepository.NewChatsDBRepository(db))
+	messagesUseCase := messageUseCase.NewMessageUseCase(messageRepository.NewMessageDbRepository(db), chatsUseCase)
+	notificationsUseCase := notificationUseCase.NewNotificationUseCase()
+	chatsApi := chatDelivery.NewChatHandlers(supportsUseCase, chatsUseCase, utils)
+	notificationApi := notificationDelivery.NewNotificationHandlers(notificationsUseCase, supportsUseCase, utils)
+	messagesApi := messageDelivery.NewMessageHandlers(messagesUseCase, supportsUseCase, notificationsUseCase, utils)
 
 	r := mux.NewRouter()
-	handler := middlewares.PanicMiddleware(middlewares.LogMiddleware(r, logrusLogger))
-	r.HandleFunc("/users", usersApi.SignUp).Methods("POST")
-	r.HandleFunc("/login", usersApi.Login).Methods("POST")
-	r.Handle("/users/{id:[0-9]+}", middlewares.AuthMiddleware(usersApi.EditProfile)).Methods("PUT")
-	r.Handle("/logout", middlewares.AuthMiddleware(usersApi.Logout)).Methods("DELETE")
-	r.Handle("/photos", middlewares.AuthMiddleware(usersApi.SavePhoto)).Methods("POST")
-	r.Handle("/photos/{id:[0-9]+}", middlewares.AuthMiddleware(usersApi.GetPhoto)).Methods("GET")
-	r.Handle("/users/{id:[0-9]+}", middlewares.AuthMiddleware(usersApi.GetUser)).Methods("GET")
-	r.Handle("/users/{name:[((a-z)|(A-Z))0-9_-]+}", middlewares.AuthMiddleware(usersApi.FindUsers)).Methods("GET")
-	r.HandleFunc("/users", usersApi.GetUserBySession).Methods("GET") //TODO:Добавить в API
+	handler := r
+	r.HandleFunc("/login", supportsApi.Login).Methods("POST")
+	r.HandleFunc("/logout", supportsApi.Logout).Methods("DELETE")
+	r.HandleFunc("/users", supportsApi.GetSupportBySession).Methods("GET")
 
-	r.HandleFunc("/chats", chatsApi.PostChat).Methods("POST")
 	r.HandleFunc("/users/{id:[0-9]+}/chats", chatsApi.GetChatsByUser).Methods("GET")
-	r.Handle("/chats/{id:[0-9]+}", middlewares.AuthMiddleware(chatsApi.GetChatById)).Methods("GET")
-	r.Handle("/chats/{id:[0-9]+}", middlewares.AuthMiddleware(chatsApi.RemoveChat)).Methods("DELETE")
 
-	r.Handle("/channels/{id:[0-9]+}", middlewares.AuthMiddleware(chatsApi.GetChannelById)).Methods("GET")
-	r.Handle("/channels/{id:[0-9]+}", middlewares.AuthMiddleware(chatsApi.EditChannel)).Methods("PUT")
-	r.Handle("/channels/{id:[0-9]+}", middlewares.AuthMiddleware(chatsApi.RemoveChannel)).Methods("DELETE")
-	r.Handle("/channels/{id:[0-9]+}/messages", middlewares.AuthMiddleware(messagesApi.SendMessage)).Methods("POST")
-	r.Handle("/channels/{id:[0-9]+}/messages", middlewares.AuthMiddleware(messagesApi.GetMessagesByChatID)).Methods("GET")
-	r.Handle("/channels/{id:[0-9]+}/messages", middlewares.AuthMiddleware(chatsApi.RemoveChannel)).Methods("DELETE")
-	//TODO: r.Handle("/channels/{id:[0-9]+}/members", middlewares.AuthMiddleware(chatsApi.LogoutFromChannel)).Methods("DELETE")
-	r.Handle("/workspaces/{id:[0-9]+}/channels", middlewares.AuthMiddleware(chatsApi.PostChannel)).Methods("POST")
+	r.HandleFunc("/channels/{id:[0-9]+}/messages", messagesApi.SendMessage).Methods("POST")
+	r.HandleFunc("/channels/{id:[0-9]+}/messages", messagesApi.GetMessagesByChatID).Methods("GET")
 
-	r.Handle("/workspaces/{id:[0-9]+}", middlewares.AuthMiddleware(chatsApi.GetWorkspaceById)).Methods("GET")
-	r.Handle("/workspaces/{id:[0-9]+}", middlewares.AuthMiddleware(chatsApi.EditWorkspace)).Methods("PUT")
-	//TODO: r.Handle("/workspaces/{id:[0-9]+}/members", middlewares.AuthMiddleware(chatsApi.LogoutFromWorkspace)).Methods("DELETE")
-	r.Handle("/workspaces/{id:[0-9]+}", middlewares.AuthMiddleware(chatsApi.RemoveWorkspace)).Methods("DELETE")
-	r.Handle("/workspaces", middlewares.AuthMiddleware(chatsApi.PostWorkspace)).Methods("POST")
-	r.Handle("/chats/{id:[0-9]+}/notifications", middlewares.AuthMiddleware(notificationApi.HandleNewWSConnection))
+	r.HandleFunc("/chats/{id:[0-9]+}/notifications", notificationApi.HandleNewSupportWSConnection)
 
-	r.Handle("/chats/{id:[0-9]+}/messages", middlewares.AuthMiddleware(messagesApi.SendMessage)).Methods("POST").
+	r.HandleFunc("/chats/{id:[0-9]+}/messages", messagesApi.SendMessage).Methods("POST").
 		HeadersRegexp("Content-Type", "application/(text|json)")
-	r.Handle("/chats/{id:[0-9]+}/messages", middlewares.AuthMiddleware(messagesApi.GetMessagesByChatID)).Methods("GET")
-	r.Handle("/messages/{text:[((a-z)|(A-Z))0-9_-]+}", middlewares.AuthMiddleware(messagesApi.FindMessages)).Methods("GET")
-	r.Handle("/messages/{id:[0-9]+}", middlewares.AuthMiddleware(messagesApi.DeleteMessage)).Methods("DELETE")
-	r.Handle("/messages/{id:[0-9]+}", middlewares.AuthMiddleware(messagesApi.EditMessage)).Methods("PUT")
+	r.HandleFunc("/chats/{id:[0-9]+}/messages", messagesApi.GetMessagesByChatID).Methods("GET")
 	log.Println("Server started")
-	genetateSSL()
 
-	//err = http.ListenAndServeTLS(":8080", "cert.pem", "key.pem", corsMiddleware(handler))
-	//if err != nil {
-	//	logrus.Errorf("Can not listen https, error: %v", err.Error())
-	//}
-
-	err = http.ListenAndServe(":8080", corsMiddleware(handler))
+	err = http.ListenAndServe(":8081", corsMiddleware(handler))
 	if err != nil {
 		logrusLogger.Error(err)
 		return
-	}
-}
-
-func genetateSSL() {
-	// Проверяем, доступен ли cert файл.
-	err := httpscerts.Check("cert.pem", "key.pem")
-	// Если он недоступен, то генерируем новый.
-	if err != nil {
-		err = httpscerts.Generate("cert.pem", "key.pem", "95.163.209.195:8080")
-		if err != nil {
-			logrus.Fatal("Ошибка: Не можем сгенерировать https сертификат.")
-		}
 	}
 }

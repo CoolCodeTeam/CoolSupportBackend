@@ -2,7 +2,7 @@ package delivery
 
 import (
 	"github.com/CoolCodeTeam/CoolSupportBackend/notifications/usecase"
-	users"github.com/CoolCodeTeam/CoolSupportBackend/supports/usecase"
+	users "github.com/CoolCodeTeam/CoolSupportBackend/supports/usecase"
 	"github.com/CoolCodeTeam/CoolSupportBackend/utils"
 	utils_models "github.com/CoolCodeTeam/CoolSupportBackend/utils/models"
 	"github.com/gorilla/mux"
@@ -15,6 +15,10 @@ type NotificationHandlers struct {
 	notificationUseCase usecase.NotificationsUseCase
 	Users               users.SupportsUseCase
 	utils               utils.HandlersUtils
+}
+
+func NewNotificationHandlers(notificationUseCase usecase.NotificationsUseCase, users users.SupportsUseCase, utils utils.HandlersUtils) *NotificationHandlers {
+	return &NotificationHandlers{notificationUseCase: notificationUseCase, Users: users, utils: utils}
 }
 
 var upgrader = websocket.Upgrader{
@@ -30,12 +34,10 @@ func (h *NotificationHandlers) HandleNewSupportWSConnection(w http.ResponseWrite
 		return
 	}
 
-
 	requestedID, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
 		h.utils.LogError(err, r)
 	}
-
 
 	//Достаем Handler с помощью Messages
 	hub, err := h.notificationUseCase.OpenServerConn(uint64(requestedID))
@@ -65,7 +67,6 @@ func (h *NotificationHandlers) HandleNewClientWSConnection(w http.ResponseWriter
 		return
 	}
 
-
 	//Достаем Handler с помощью Messages
 	hub, err := h.notificationUseCase.OpenClientConn()
 	go hub.Run()
@@ -79,7 +80,7 @@ func (h *NotificationHandlers) HandleNewClientWSConnection(w http.ResponseWriter
 
 		if err != nil {
 			hub.RemoveClient(ws)
-			err=h.notificationUseCase.HandleCloseConn(hub.ChatID)
+			err = h.notificationUseCase.HandleCloseConn(hub.ChatID)
 			return
 		}
 		hub.BroadcastChan <- m
@@ -96,4 +97,3 @@ func (h NotificationHandlers) parseCookie(r *http.Request) (uint64, error) {
 		return ID, utils_models.NewClientError(nil, http.StatusUnauthorized, "Bad request: no such user :(")
 	}
 }
-

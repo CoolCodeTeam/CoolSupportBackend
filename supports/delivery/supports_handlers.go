@@ -18,7 +18,7 @@ type SupportHandlers struct {
 	utils    utils.HandlersUtils
 }
 
-func NewUsersHandlers(supports useCase.SupportsUseCase, sessions repository.SessionRepository, utils utils.HandlersUtils) *SupportHandlers {
+func NewSupportHandlers(supports useCase.SupportsUseCase, sessions repository.SessionRepository, utils utils.HandlersUtils) *SupportHandlers {
 	return &SupportHandlers{
 		Supports: supports,
 		Sessions: sessions,

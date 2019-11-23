@@ -12,8 +12,12 @@ import (
 
 type ChatHandlers struct {
 	Users users.SupportsUseCase
-	Chats    usecase.ChatsUseCase
+	Chats usecase.ChatsUseCase
 	utils utils.HandlersUtils
+}
+
+func NewChatHandlers(users users.SupportsUseCase, chats usecase.ChatsUseCase, utils utils.HandlersUtils) *ChatHandlers {
+	return &ChatHandlers{Users: users, Chats: chats, utils: utils}
 }
 
 func (c *ChatHandlers) GetChatsByUser(w http.ResponseWriter, r *http.Request) {
@@ -37,14 +41,13 @@ func (c *ChatHandlers) GetChatsByUser(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(jsonChat)
 }
 
-func(c *ChatHandlers) GetChat(w http.ResponseWriter, r *http.Request) {
-	id,err:=c.Chats.GetChat()
-	if err!=nil{
-		c.utils.HandleError(err,w,r)
+func (c *ChatHandlers) GetChat(w http.ResponseWriter, r *http.Request) {
+	id, err := c.Chats.GetChat()
+	if err != nil {
+		c.utils.HandleError(err, w, r)
 	}
-	model:=models.GetChatModel{ID:id}
+	model := models.GetChatModel{ID: id}
 	response, err := json.Marshal(model)
 	_, err = w.Write(response)
 
 }
-

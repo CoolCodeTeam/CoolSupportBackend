@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/go-park-mail-ru/2019_2_CoolCodeMicroServices/utils/models"
+	"github.com/CoolCodeTeam/CoolSupportBackend/utils/models"
 	"github.com/gomodule/redigo/redis"
 	"net/http"
 )
