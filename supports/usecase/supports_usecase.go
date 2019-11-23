@@ -12,12 +12,12 @@ import (
 type SupportsUseCase interface {
 	GetSupportByID(id uint64) (models.Support, error)
 	Login(support models.Support) (models.Support, error)
-	GetUserBySession(session string) (uint64,error)
+	GetUserBySession(session string) (uint64, error)
 }
 
 type supportUseCase struct {
 	repository repository.SupportRepo
-	sessions repository.SessionRepository
+	sessions   repository.SessionRepository
 }
 
 func (u *supportUseCase) Login(loginSupport models.Support) (models.Support, error) {
@@ -36,10 +36,10 @@ func (u *supportUseCase) Login(loginSupport models.Support) (models.Support, err
 
 }
 
-func NewSupportUseCase(repo repository.SupportRepo,sessions repository.SessionRepository) SupportsUseCase {
+func NewSupportUseCase(repo repository.SupportRepo, sessions repository.SessionRepository) SupportsUseCase {
 	return &supportUseCase{
 		repository: repo,
-		sessions:sessions,
+		sessions:   sessions,
 	}
 }
 
@@ -75,8 +75,8 @@ func comparePasswords(hashedPassword string, plainPassword string) bool {
 	return true
 }
 
-func (u *supportUseCase) GetUserBySession(session string) (uint64,error) {
-	id,err:=u.sessions.GetID(session)
+func (u *supportUseCase) GetUserBySession(session string) (uint64, error) {
+	id, err := u.sessions.GetID(session)
 	return id, err
 
 }

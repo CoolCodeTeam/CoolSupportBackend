@@ -18,6 +18,14 @@ type SupportHandlers struct {
 	utils    utils.HandlersUtils
 }
 
+func NewUsersHandlers(supports useCase.SupportsUseCase, sessions repository.SessionRepository, utils utils.HandlersUtils) *SupportHandlers {
+	return &SupportHandlers{
+		Supports: supports,
+		Sessions: sessions,
+		utils:    utils,
+	}
+}
+
 func (handlers *SupportHandlers) Login(w http.ResponseWriter, r *http.Request) {
 	var loginSupport models.Support
 	body := r.Body
