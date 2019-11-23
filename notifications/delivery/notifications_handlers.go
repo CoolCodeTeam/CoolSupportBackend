@@ -65,9 +65,9 @@ func (h *NotificationHandlers) HandleNewClientWSConnection(w http.ResponseWriter
 		return
 	}
 
-	userID, err := h.parseCookie(r)
+
 	//Достаем Handler с помощью Messages
-	hub, err := h.notificationUseCase.OpenClientConn(userID)
+	hub, err := h.notificationUseCase.OpenClientConn()
 	go hub.Run()
 	//Запускаем event loop
 	hub.AddClientChan <- ws

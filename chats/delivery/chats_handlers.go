@@ -37,3 +37,14 @@ func (c *ChatHandlers) GetChatsByUser(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(jsonChat)
 }
 
+func(c *ChatHandlers) GetChat(w http.ResponseWriter, r *http.Request) {
+	id,err:=c.Chats.GetChat()
+	if err!=nil{
+		c.utils.HandleError(err,w,r)
+	}
+	model:=models.GetChatModel{ID:id}
+	response, err := json.Marshal(model)
+	_, err = w.Write(response)
+
+}
+
