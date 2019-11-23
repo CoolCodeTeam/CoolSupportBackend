@@ -54,6 +54,14 @@ func (u *supportUseCase) GetSupportByID(id uint64) (models.Support, error) {
 	return support, nil
 }
 
+func (u *supportUseCase) GetRandomID() (uint64, error) {
+	randID, err := u.repository.GetRandomID()
+	if err != nil {
+		return 0, err
+	}
+	return randID, nil
+}
+
 func (u *supportUseCase) Valid(support models.Support) bool {
 	return support.Email != ""
 }

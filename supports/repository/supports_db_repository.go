@@ -36,6 +36,19 @@ func (SupportStore *DBSupportStore) GetSupportByEmail(email string) (models.Supp
 	return *support, nil
 }
 
+func (SupportStore *DBSupportStore) GetRandomID() (uint64, error) {
+	var randID uint64
+	selectStr := "SELECT ID FROM supports ORDER BY RANDOM() LIMIT 1"
+	row := SupportStore.DB.QueryRow(selectStr)
+
+	err := row.Scan(&randID)
+
+	if err != nil {
+		return 0, utilsModels.NewServerError(err, http.StatusInternalServerError, "Can not get random support ID: "+err.Error())
+	}
+	return randID, nil
+}
+
 func NewSupportDBStore(db *sql.DB) SupportRepo {
 	return &DBSupportStore{
 		db,
